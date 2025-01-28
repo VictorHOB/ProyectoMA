@@ -1,0 +1,240 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centra el contenido verticalmente */
+    align-items: center; /* Centra el contenido horizontalmente */
+    padding: 20px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
+
+/* Estilo para el contenedor de login */
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2em;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    overflow: hidden;
+}
+
+/* Estilo para los grupos de formulario */
+.form-group {
+    margin-bottom: 1em;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Botón de inicio de sesión */
+button {
+    width: 100%;
+    padding: 0.5em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-actualizar {
+    width: 100%;
+    padding: 0.5em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Enlace para restablecer contraseña */
+p a {
+        color: #4CAF50;
+        background-color: white;
+    text-decoration: none;
+}
+
+p a:hover {
+    text-decoration: underline;
+    background-color: #45a049; /* Color de fondo al pasar el mouse */
+    color: white;
+}
+
+/* Asegura que el header ocupe siempre el 100% del ancho */
+#header {
+    display: flex;
+    background-color: rgba(190, 237, 254, 0.404);
+    width: 100%;
+    padding: 10px 0;
+    justify-content: space-between;
+    align-items: center; /* Añadir esta propiedad */
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+
+/* Ajustes de las imágenes para ocupar el alto máximo */
+#headerimages img {
+    max-height: 75px;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    margin: 0 10px;
+}
+
+
+/* Ajustes del ministerio y talento humano para evitar colapso */
+#ministerio, #talentohumano {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Ajustes en pantallas pequeñas (móviles) */
+@media (min-width: 768px) and (max-width: 1024px)  {
+    #ministerio, #talentohumano {
+        font-size: large;
+        width: 100%;
+        text-align: center;
+    }
+
+    #headerimages {
+        text-align: center;
+        width: 100%;
+    }
+
+    #headerimages img {
+        margin: 5px;
+        max-height: 50px;
+    }
+
+    #header {
+        padding: 5px 0;
+    }
+}
+
+/* Estilo para el contenedor de los módulos */
+.contenedor-modulos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    margin-top: 30px;
+}
+/* Espacio entre los bloques de módulos */
+.contenedor-modulos .modulos {
+    margin-bottom: 30px;
+    
+}
+
+
+.modulos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.modulos div{
+    border: 2px solid black;
+}
+
+
+
+.modulo {
+    border: 2px solid black;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    width: 150px;
+    height: 75px;
+    cursor: pointer;
+    margin: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+/* Colores de los bloque modulares */
+    #permisos .modulo{
+        background-color: limegreen;
+        color: white;
+    }
+    #responsables .modulo{
+        background-color: orange;
+        color: white;
+    }
+    #gestion .modulo{
+        background-color: cornflowerblue;
+    }
+    #administrativo .modulo{
+        background-color: white;
+    }
+/* Hover de los bloque modulares */
+    #permisos .modulo:hover{
+        background-color: green;
+    }
+    #responsables .modulo:hover{
+        background-color: darkorange;
+    }
+    #gestion .modulo:hover{
+        background-color: blue;
+    }
+    #administrativo .modulo:hover{
+        background-color: gainsboro;
+    }
+
+
+
+label {
+    font-size: 16px;
+    font-weight: bold;
+}
+/* Estilo para enlaces con clase "btn" */
+a {
+    display: inline-block; /* Hace que se comporte como un botón */
+    width: auto;
+    background-color: #4CAF50;
+    padding: 10px 20px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+a:hover {
+    background-color: #45a049; /* Color de fondo al pasar el mouse */
+}
