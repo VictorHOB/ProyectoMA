@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Verificar si los datos están definidos
     $id = isset($_POST['id']) ? $_POST['id'] : null;
-    $numero_identificacion = isset($_POST['numero_identificacion']) ? $_POST['numero_identificacion'] : null;
+    $numero_identificacion = isset($_POST['cedula']) ? $_POST['cedula'] : null;
     $nombres = isset($_POST['nombres']) ? $_POST['nombres'] : null;
     $aux = isset($_POST['modalidad']) ? $_POST['modalidad'] : null;
     $codigo = isset($_POST['codigo']) ? $_POST['codigo'] : null;
@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $modalidades = [
         1 => "NOMBRAMIENTO",
         2 => "CONTRATO INDEFINIDO",
-        3 => "CONTRATOS OCASIONALES"
+        3 => "CONTRATOS OCASIONALES",
+        4 => "NOMBRAMIENTO PROVISIONAL"
     ];
     $modalidad_laboral = $modalidades[$aux] ?? "DESCONOCIDO";
 

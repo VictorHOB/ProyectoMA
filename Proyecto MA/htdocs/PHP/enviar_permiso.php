@@ -8,28 +8,38 @@ require '../libs/PHPMailer-master/PHPMailer-master/src/SMTP.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+//obtener json de configuración
 $config = json_decode(file_get_contents('/home/vol9_1/infinityfree.com/if0_37560293/htdocs/PHP/config.json'), true);
 $permitir_permisos_anteriores = $config['permitir_permisos_anteriores'];
 $jefe_zonal=$config['jefe_zonal'];
 
+    // Obtener las fechas del formulario
+    $fecha_inicio = $_POST['fecha_desde'];
+    $fecha_fin = $_POST['fecha_hasta'];
+    $hora_inicio = $_POST['hora_desde'];
+    $hora_fin = $_POST['hora_hasta'];
+        
+    // Obtener la fecha y hora actual en formato adecuado
+    $fecha_actual = new DateTime();
+
+    // Combinar fecha y hora en objetos DateTime para comparación
+    $datetime_inicio = new DateTime("$fecha_inicio $hora_inicio");
+    $datetime_fin = new DateTime("$fecha_fin $hora_fin");
+
+    // Convertir fechas a formato correcto para MySQL
+    $fecha_inicio_mysql = $datetime_inicio->format('Y-m-d H:i:s');
+    $fecha_fin_mysql = $datetime_fin->format('Y-m-d H:i:s');
+
+
 //VALIDAR HORA MINIMA PERMISO
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$permitir_permisos_anteriores) {
-    // Obtener las fechas del formulario
-    $fecha_inicio = $_POST['desde'];
-    $fecha_fin = $_POST['hasta'];
-    $fecha_actual = date('Y-m-d\TH:i'); // Obtener la fecha actual
-
-    /*echo "ASDasd - $fecha_inicio - asdsadsa - $fecha_fin - ASD - $fecha_actual";
-    exit;*/
-
     // Validar que las fechas no sean anteriores a la fecha actual
-    if ($fecha_inicio <= $fecha_actual || $fecha_fin <= $fecha_actual) {
+    if ($datetime_inicio < $fecha_actual || $datetime_fin <= $fecha_actual) {
         echo "\nError: No puedes solicitar permisos con fecha y hora anteriores a la actual.";
         exit; // Detener el procesamiento
     }
-
     // Validar que la fecha de fin no sea anterior a la fecha de inicio
-    if ($fecha_fin <= $fecha_inicio) {
+    if ($datetime_fin <= $datetime_inicio) {
         echo "\nError: La fecha de fin no puede ser anterior a la fecha de inicio.";
         exit; // Detener el procesamiento
     }
@@ -54,6 +64,7 @@ $stmtresp->execute();
 $resultresp = $stmtresp->get_result();
 $row = $resultresp->fetch_assoc();
 
+/*
 // Verifica si el empleado es el jefe de la oficina técnica
 if ($row['empleado_id'] == $row['jefe_oficina_id']) {
     // Si el empleado es el jefe de la oficina técnica, asignar el correo del jefe de los jefes
@@ -68,12 +79,12 @@ if ($row['empleado_id'] == $row['jefe_oficina_id']) {
     $resultaux = $stmtaux->get_result();
     $rowaux = $resultaux->fetch_assoc();
     //$correollegada = $row['correo'];//TEST
-    $correollegada = $rowaux['correo']; //EN CASO DE IGUALDAD, ENVIAR A JEFE ZONAL
+    //$correollegada = $rowaux['correo']; //EN CASO DE IGUALDAD, ENVIAR A JEFE ZONAL
 } else {
     // Si no es el jefe, asignar el correo del jefe directo
     $correollegada = $row['correo'];
 }
-
+*/
 
 $correoRRHH='eliana.laverde@ambiente.gob.ec'; //CORREO RRHH
 
@@ -81,13 +92,17 @@ $correoRRHH='eliana.laverde@ambiente.gob.ec'; //CORREO RRHH
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['nombre'];
 $tipo_permiso = $_POST['tipo_permiso'] ?? null;
-$fecha_desde = $_POST['desde'] ?? null;
-$fecha_hasta = $_POST['hasta'] ?? null;
 $tiempo_total = $_POST['tiempo_total'] ?? "0";
 $motivo = $_POST['motivo'] ?? null;
-$razon_comision = ($motivo === 'comision') ? ($_POST['razon_comision'] ?? null) : null;
-$observaciones = $_POST['observaciones'] ?? null;
-$responsable=$row['nombre_responsable'];
+$razon_comision = ($motivo === 'comision') ? ($_POST['razon_comision'] ?? null) : 'ND';
+//$observaciones = $_POST['observaciones'] ?? null;
+$observaciones =  null;
+if ($row['empleado_id'] == $row['jefe_oficina_id'] && $row['empleado_id'] != 999) {
+    $responsable=$jefe_zonal ?? null;
+}else{
+    $responsable=$row['jefe_oficina_id'] ?? null;
+}
+$reincorporacion = $_POST['fecha_reincorporacion'] ?? '0000-00-00';
 
 $directorio_destino = '/home/vol9_1/infinityfree.com/if0_37560293/htdocs/permisos/archivos/';
 
@@ -101,7 +116,7 @@ if ($archivo_justificacion && $archivo_justificacion['error'] === UPLOAD_ERR_NO_
     // Continuar con la validación del archivo
          $extensiones_permitidas = ['pdf', 'jpg', 'jpeg', 'png'];
         $tamano_maximo = 2 * 1024 * 1024; // 2 MB
-        $nombre_archivo = $archivo_justificacion['name'];
+        $nombre_archivo = basename($archivo_justificacion['name']);
         $extension_archivo = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
         $tamano_archivo = $archivo_justificacion['size'];
 
@@ -130,22 +145,24 @@ if ($archivo_justificacion && $archivo_justificacion['error'] === UPLOAD_ERR_NO_
 }
         
 
-// Preparar y ejecutar la consulta SQL
-$sql = "INSERT INTO permisos (user_id, tipo_permiso, fecha_desde, fecha_hasta, tiempo_total, motivo, razon_comision, observaciones, archivo_justificacion)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+// Preparar y ejecutar la consulta SQL para guardar el permiso
+$sql = "INSERT INTO permisos (user_id, tipo_permiso, fecha_desde, fecha_hasta, tiempo_total, motivo, razon_comision, observaciones, archivo_justificacion, responsable, reincorporacion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param(
-    "sssssssss",
+    "sssssssssis",
     $user_id,            // string
     $tipo_permiso,       // string
-    $fecha_desde,        // string
-    $fecha_hasta,        // string
+    $fecha_inicio_mysql,        // string
+    $fecha_fin_mysql,        // string
     $tiempo_total,       // string
     $motivo,             // string
     $razon_comision,     // string
     $observaciones,      // string
-    $nombre_unico        // string o null
+    $nombre_unico,        // string o null
+    $responsable,        //int id_empleado responsable
+    $reincorporacion    //Fecha reincorporación
 );
 
 
@@ -166,8 +183,7 @@ if ($stmt->execute()) {
 
         $mail->setFrom('series250@gmail.com', 'PERMISOS MINISTERIO DE AMBIENTE'); //TEST
         //$mail->setFrom($correosalida, 'PERMISOS MINISTERIO DE AMBIENTE'); //DIRECCIÓN REMITENTE MINISTERIO
-        $mail->addAddress($correollegada); //DIRECCIÓN RECEPTOR
-        $mail->addAddress($correoRRHH);
+        $mail->addAddress('dzd.chimborazo@gmail.com'); //DIRECCIÓN RECEPTOR REPOSITORIO
         $mail->isHTML(true);
 
         $mail->Subject = 'Nueva Solicitud de Permiso';
@@ -176,7 +192,7 @@ if ($stmt->execute()) {
             <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <h2 style="color: #0056b3;">Nueva Solicitud de Permiso</h2>
                 <p>Se ha generado una nueva solicitud de permiso con los siguientes detalles:</p>
-                <p>Responsable a cargo: ' . htmlspecialchars($responsable) . '</p>
+                <p>Responsable a cargo: ' . htmlspecialchars($row['nombre_responsable']) . '</p>
                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                     <tr style="background-color: #f2f2f2;">
                         <td style="padding: 10px; border: 1px solid #ddd;"><strong>Solicitante:</strong></td>

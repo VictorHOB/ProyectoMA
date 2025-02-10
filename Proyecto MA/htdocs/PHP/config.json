@@ -1,6 +1,25 @@
 {
-    "permitir_permisos_anteriores": false,
-    "empresa_nombre": "Ministerio de Ambiente",
-    "zona_horaria": "America\/Guayaquil",
-    "jefe_zonal": "128"
+    "jefe_zonal": "128",
+    "permitir_permisos_anteriores": true,
+    "zona_horaria": {
+        "actual": "America\/Guayaquil",
+        "opciones": [
+            "America\/Guayaquil",
+            "America\/Bogota",
+            "America\/Lima"
+        ]
+    },
+    "inicio_almuerzo": "13:00:00",
+    "fin_almuerzo": "14:00:00",
+    "permisos_disponibles": {
+        "vacaciones": true,
+        "permiso_medico": true,
+        "permiso_personal": false
+    },
+    "permiso_toma_vacacion": {
+        "vacaciones": true,
+        "permiso_medico": false,
+        "permiso_personal": true,
+        "calamidad_domestica": false
+    }
 }

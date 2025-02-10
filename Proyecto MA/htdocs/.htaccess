@@ -1,2 +1,16 @@
 php_value date.timezone America/Bogota
 php_value display_errors On
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 day"
+    ExpiresByType application/javascript "access plus 1 day"
+    ExpiresByType image/png "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 week"
+    ExpiresByType image/gif "access plus 1 week"
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header Set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header Set Pragma "no-cache"
+    Header Set Expires 0
+</IfModule>

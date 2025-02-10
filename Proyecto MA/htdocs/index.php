@@ -54,6 +54,7 @@ main {
 /* Estilo para el contenedor de login */
 .login-container {
     width: 100%;
+
     max-width: 400px;
     margin: 0 auto;
     padding: 2em;

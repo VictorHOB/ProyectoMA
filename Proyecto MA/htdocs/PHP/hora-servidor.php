@@ -13,8 +13,8 @@ if (!$config) {
     exit;
 }
 
-// Establecer la zona horaria usando JSON
-$zona_horaria = $config['zona_horaria'];
+// Establecer la zona horaria usando el valor del JSON
+$zona_horaria = $config['zona_horaria']['actual'];
 date_default_timezone_set($zona_horaria); // Ajusta la zona horaria dinámica
 
 // Obtener la hora actual y darle formato

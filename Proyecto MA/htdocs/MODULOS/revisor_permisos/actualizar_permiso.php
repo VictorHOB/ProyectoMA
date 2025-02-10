@@ -14,21 +14,32 @@ use PHPMailer\PHPMailer\Exception;
 $correosalida = 'dzd.chimborazo@gmail.com';
 $contraseñaSalida = 'plxu smrg ucoi edvn';
 
-// Verifica que se haya enviado el formulario con el ID y la acción
-if (isset($_POST['id']) && isset($_POST['accion'])) {
-    $id = intval($_POST['id']);
-    $accion = $_POST['accion'];
+// Leer el cuerpo de la solicitud en formato JSON
+$inputJSON = file_get_contents('php://input');
+$inputData = json_decode($inputJSON, true); // Convertir JSON a un array asociativo
+
+// Verifica que se hayan recibido los datos necesarios
+if (isset($inputData['id']) && isset($inputData['accion'])) {
+    $id = intval($inputData['id']);  // Convertir a entero para evitar inyecciones
+    $accion = htmlspecialchars($inputData['accion']);  // Sanitizar texto para evitar XSS
+    $observacion = isset($inputData['observacion']) ? htmlspecialchars($inputData['observacion']) : ''; // Sanitizar la observación
+
+
+    // Aquí puedes continuar con el procesamiento...
+
 
     // Determina el nuevo estado según la acción
     $nuevoEstado = ($accion === 'Aprobar') ? 'Aprobado' : 'Denegado';
 
     // Prepara y ejecuta la actualización del estado del permiso
-    $stmt = $conn->prepare("UPDATE permisos SET estado = ? WHERE id = ?");
-    $stmt->bind_param("si", $nuevoEstado, $id);
+    $stmt = $conn->prepare("UPDATE permisos SET estado = ?, observaciones_jefe = ? WHERE id = ?");
+    $stmt->bind_param("ssi", $nuevoEstado, $observacion, $id);
     $stmt->execute();
 
     // Si la actualización fue exitosa
     if ($stmt->affected_rows > 0) {
+        
+        /* Configuración del correo
         // Obtener los detalles del permiso y el correo del empleado asociado al permiso
         $stmtDetalles = $conn->prepare("
             SELECT p.user_id, p.tipo_permiso, p.fecha_desde, p.fecha_hasta, p.tiempo_total, p.motivo, p.razon_comision, p.observaciones, p.archivo_justificacion, u.correo 
@@ -43,7 +54,7 @@ if (isset($_POST['id']) && isset($_POST['accion'])) {
             $permiso = $resultDetalles->fetch_assoc();
             $correoEmpleado = $permiso['correo'];
 
-            // Configuración del correo
+            
             $mail = new PHPMailer(true);
             $mail->CharSet = 'UTF-8';
             try {
@@ -59,7 +70,7 @@ if (isset($_POST['id']) && isset($_POST['accion'])) {
                 // Configuración del remitente y destinatario
                 $mail->setFrom('series250@gmail.com', 'PERMISOS MINISTERIO DE AMBIENTE'); //TEST
                 //$mail->setFrom($correosalida, 'PERMISOS MINISTERIO DE AMBIENTE'); //DIRECCIÓN REMITENTE MINISTERIO
-                $mail->addAddress($correoEmpleado);//DIRECCION RECEPTOR
+                //$mail->addAddress($correoEmpleado);//DIRECCION RECEPTOR
 
                 // Contenido del correo
                 $mail->isHTML(true);
@@ -106,25 +117,17 @@ if (isset($_POST['id']) && isset($_POST['accion'])) {
                         </table>
                         <p style='font-size: 12px; color: #888;'>Este mensaje fue generado automáticamente, no es necesario responder.</p>
                     </div>";
-
-
+                */
                 // Enviar el correo
-                if ($mail->send()) {
-                    echo json_encode(['status' => 'success', 'estado' => $nuevoEstado, 'id' => $id]);
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'Error al enviar el correo.']);
-                }
-            } catch (Exception $e) {
-                echo json_encode(['status' => 'error', 'message' => 'Error al enviar el correo: ' . $mail->ErrorInfo]);
-            }
+                if ( true) {
+                    echo 'success';
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'No se encontró el correo del empleado.']);
+            echo 'Error al actualizar permiso.';
         }
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error al actualizar el permiso.']);
-    }
-
-    $stmt->close();
+    } 
+} else {
+    echo 'Error al actualizar permiso.';
 }
+$stmt->close();
 $conn->close();
 ?>

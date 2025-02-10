@@ -9,27 +9,38 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== '0' && $_SESSION['role'] 
     exit();
 }
 
+$config = json_decode(file_get_contents('/home/vol9_1/infinityfree.com/if0_37560293/htdocs/PHP/config.json'), true);
+$jefe_zonal=$config['jefe_zonal'];
+
 // Conexión a la base de datos
 require '../PHP/conexion.php';
 
+
 // Prepara la consulta con sentencia preparada
-$stmt = $conn->prepare("SELECT a.id as ID, fecha_solicitud as 'FECHA SOLICITUD', c.nombres as EMPLEADO, tipo_permiso as 'TIPO PERMISO', fecha_desde as DESDE, fecha_hasta as HASTA, tiempo_total as 'TIEMPO TOTAL', 
-                 motivo as MOTIVO, razon_comision as RAZON, observaciones as OBSERVACIONES, archivo_justificacion as JUSTIFICACIÓN
+// Prepara la consulta con sentencia preparada
+$query = "SELECT a.id as ID, fecha_solicitud as 'FECHA SOLICITUD', c.nombres as EMPLEADO, 
+                 tipo_permiso as 'TIPO PERMISO', fecha_desde as DESDE, fecha_hasta as HASTA, 
+                 tiempo_total as 'TIEMPO TOTAL', motivo as MOTIVO, razon_comision as RAZON, 
+                  archivo_justificacion as JUSTIFICACIÓN
           FROM permisos AS a 
-          left join usuarios as zz on a.user_id=zz.id
-          LEFT JOIN empleados as c ON zz.cedula=c.numero_identificacion
-          left join oficinatecnica as o on o.id=c.oficina_id
-          LEFT JOIN empleados as z ON z.oficina_id=o.id
-          WHERE z.numero_identificacion = ? AND estado = 'Pendiente'");
+          LEFT JOIN usuarios as zz ON a.user_id = zz.id
+          LEFT JOIN empleados as c ON zz.cedula = c.numero_identificacion
+          LEFT JOIN empleados as z ON a.responsable = z.id
+          WHERE  estado = 'Pendiente' AND z.numero_identificacion = ? ";
+
+
+// Ahora preparamos la consulta con la condición corregida
+$stmt = $conn->prepare($query);
 
 // Vincula el parámetro
-$stmt->bind_param("i", $_SESSION['cedula']);
+$stmt->bind_param("s", $_SESSION['cedula']);
 
 // Ejecuta la consulta
 $stmt->execute();
 
 // Obtiene los resultados
 $resultado = $stmt->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -61,36 +72,7 @@ $resultado = $stmt->get_result();
             padding: 20px;
             display: inline-block;
             border-radius: 8px;
-        }
-
-        /* Botones con estilo diferente para aceptar y rechazar */
-        .confirm {
-            background-color: green;
-            color: white;
-            padding: 10px 20px;
-            margin: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .cancel {
-            background-color: red;
-            color: white;
-            padding: 10px 20px;
-            margin: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .confirm:hover {
-            background-color: darkgreen;
-        }
-
-        .cancel:hover {
-            background-color: darkred;
-        }
+        }  
     </style>
 </head>
 <body>
@@ -129,7 +111,7 @@ $resultado = $stmt->get_result();
                         }
                         echo "<td style='padding: 8px;'>
                                 <button onclick='showConfirmationModal(\"Aprobar\", \"" . $fila['ID'] . "\")'>Aceptar</button>
-                                <button onclick='showConfirmationModal(\"Rechazar\", \"" . $fila['ID'] . "\")'>Rechazar</button>
+                                <button style='background-color:red' onclick='showConfirmationModal(\"Rechazar\", \"" . $fila['ID'] . "\")'>Rechazar</button>
                               </td>";
                         echo "</tr>";
                     }
@@ -145,6 +127,7 @@ $resultado = $stmt->get_result();
     <div id="confirmationModal">
         <div>
             <h3 id="confirmationMessage"></h3>
+            <textarea id="observacion" placeholder="Ingrese una observación (opcional)" rows="5" "></textarea>
             <button id="confirmButton" class="confirm">Confirmar</button>
             <button id="cancelButton" class="cancel">Cancelar</button>
         </div>
@@ -159,63 +142,63 @@ $resultado = $stmt->get_result();
     let selectedId = '';
 
     // Mostrar el modal de confirmación
-    function showConfirmationModal(action, id) {
+    // Función para mostrar el modal de confirmación
+function showConfirmationModal(action, id) {
     selectedAction = action;
     selectedId = id;
 
-    console.log("Acción seleccionada: ", selectedAction);
-    console.log("ID seleccionado: ", selectedId);
-
-    const modalMessage = action === 'Aprobar' 
-        ? '¿Estás seguro de que deseas aprobar este permiso?' 
+    document.getElementById('confirmationMessage').innerText = 
+        action === 'Aprobar' ? '¿Estás seguro de que deseas aprobar este permiso?' 
         : '¿Estás seguro de que deseas rechazar este permiso?';
-    
-    document.getElementById('confirmationMessage').innerText = modalMessage;
+
     document.getElementById('confirmationModal').style.display = 'block';
 }
 
-    // Confirmar la acción y enviar la solicitud al servidor sin redirección
-    document.getElementById('confirmButton').onclick = function() {
-        const formData = new FormData();
-        formData.append('id', selectedId);
-        formData.append('accion', selectedAction);
+// Confirmar la acción y enviar la solicitud al servidor sin redirección
+document.getElementById('confirmButton').addEventListener("click", function() {
+    const observacion = document.getElementById('observacion').value.trim();
 
-        // Usamos AJAX para enviar la solicitud sin recargar la página
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'revisor_permisos/actualizar_permiso.php', true);
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                // Parsear la respuesta JSON
-                const response = JSON.parse(xhr.responseText);
-
-                if (response.status === 'success') {
-                    alert("Correo Enviado Exitosamente");
-                    // Si es aprobado o rechazado, elimina la fila
-                    deleteRow(selectedId);
-                    
-                    // Cierra el modal
-                    document.getElementById('confirmationModal').style.display = 'none';
-                } else {
-                    // Si hubo un error, muestra un mensaje
-                    alert(response.message);
-                }
-            }
-        };
-        xhr.send(formData); // Enviar los datos sin recargar la página
-    };
-
-    // Cancelar la acción
-    document.getElementById('cancelButton').onclick = function() {
-        document.getElementById('confirmationModal').style.display = 'none';
-    };
-
-    // Eliminar la fila de la tabla
-    function deleteRow(id) {
-        var row = document.getElementById('row_' + id);
-        if (row) {
-            row.remove(); // Elimina la fila de la tabla
+    fetch('revisor_permisos/actualizar_permiso.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: selectedId,
+            accion: selectedAction,
+            observacion: observacion
+        })
+    })
+    .then(response => response.text())  // Espera texto plano
+    .then(responseText => {
+        if (responseText === 'success') {
+            alert("Permiso " + selectedAction.toLowerCase() + " exitosamente.");
+            deleteRow(selectedId);
+            document.getElementById('confirmationModal').style.display = 'none';
+        } else {
+            alert("Error: " + responseText);
         }
+    })
+    .catch(error => {
+        console.error("Error en la solicitud:", error);
+        alert("Hubo un error al procesar la solicitud.");
+    });
+});
+
+
+// Cancelar la acción
+document.getElementById('cancelButton').addEventListener("click", function() {
+    document.getElementById('confirmationModal').style.display = 'none';
+});
+
+// Función para eliminar la fila después de aprobar/rechazar
+function deleteRow(id) {
+    var row = document.getElementById('row_' + id);
+    if (row) {
+        row.remove();
     }
-</script>
+}
+
+    </script>
 </body>
 </html>
